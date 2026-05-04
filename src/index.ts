@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { productsRouter } from "./routes/products.js";
 import { categoriesRouter } from "./routes/categories.js";
 import { ordersRouter } from "./routes/orders.js";
+import { authRouter } from "./routes/auth.js";
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok", time: new Date().toISOString() });
 });
 
+app.use("/api/auth", authRouter);
 app.use("/api/products", productsRouter);
 app.use("/api/categories", categoriesRouter);
 app.use("/api/orders", ordersRouter);

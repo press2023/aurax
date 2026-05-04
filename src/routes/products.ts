@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { prisma } from "../db.js";
+import { requireAdmin } from "../auth.js";
 
 export const productsRouter = Router();
 
@@ -43,8 +44,8 @@ productsRouter.get("/:slug", async (req, res) => {
   }
 });
 
-// POST /api/products
-productsRouter.post("/", async (req, res) => {
+// POST /api/products (admin)
+productsRouter.post("/", requireAdmin, async (req, res) => {
   try {
     const product = await prisma.product.create({ data: req.body });
     res.status(201).json(product);
@@ -53,8 +54,8 @@ productsRouter.post("/", async (req, res) => {
   }
 });
 
-// PATCH /api/products/:id
-productsRouter.patch("/:id", async (req, res) => {
+// PATCH /api/products/:id (admin)
+productsRouter.patch("/:id", requireAdmin, async (req, res) => {
   try {
     const product = await prisma.product.update({
       where: { id: req.params.id },
@@ -66,8 +67,8 @@ productsRouter.patch("/:id", async (req, res) => {
   }
 });
 
-// DELETE /api/products/:id
-productsRouter.delete("/:id", async (req, res) => {
+// DELETE /api/products/:id (admin)
+productsRouter.delete("/:id", requireAdmin, async (req, res) => {
   try {
     await prisma.product.delete({ where: { id: req.params.id } });
     res.status(204).end();

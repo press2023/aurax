@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { prisma } from "../db.js";
+import { requireAdmin } from "../auth.js";
 
 export const categoriesRouter = Router();
 
@@ -27,7 +28,7 @@ categoriesRouter.get("/:slug", async (req, res) => {
   }
 });
 
-categoriesRouter.post("/", async (req, res) => {
+categoriesRouter.post("/", requireAdmin, async (req, res) => {
   try {
     const category = await prisma.category.create({ data: req.body });
     res.status(201).json(category);
@@ -36,7 +37,7 @@ categoriesRouter.post("/", async (req, res) => {
   }
 });
 
-categoriesRouter.patch("/:id", async (req, res) => {
+categoriesRouter.patch("/:id", requireAdmin, async (req, res) => {
   try {
     const category = await prisma.category.update({
       where: { id: req.params.id },
@@ -48,7 +49,7 @@ categoriesRouter.patch("/:id", async (req, res) => {
   }
 });
 
-categoriesRouter.delete("/:id", async (req, res) => {
+categoriesRouter.delete("/:id", requireAdmin, async (req, res) => {
   try {
     await prisma.category.delete({ where: { id: req.params.id } });
     res.status(204).end();
