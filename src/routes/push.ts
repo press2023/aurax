@@ -7,12 +7,29 @@ export const pushRouter = Router();
 // For production, store in DB
 const subscriptions: webpush.PushSubscription[] = [];
 
-// Configure VAPID
-webpush.setVapidDetails(
-  process.env.VAPID_EMAIL || "mailto:admin@aurax.com",
-  process.env.VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
+// Configure VAPID — only if keys are present. Missing keys must NOT crash the server;
+// push endpoints will simply return an error until keys are set in env.
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY;
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
+const VAPID_READY = Boolean(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY);
+
+if (VAPID_READY) {
+  try {
+    webpush.setVapidDetails(
+      process.env.VAPID_EMAIL || "mailto:admin@aurax.com",
+      VAPID_PUBLIC_KEY!,
+      VAPID_PRIVATE_KEY!
+    );
+    console.log("✅ Web Push configured (VAPID keys loaded)");
+  } catch (e: any) {
+    console.error("❌ Failed to configure VAPID:", e.message);
+  }
+} else {
+  console.warn(
+    "⚠️  VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY not set — Web Push disabled. " +
+      "Set them in environment variables to enable push notifications."
+  );
+}
 
 // GET /api/push/vapid-public-key — return public key to frontend
 pushRouter.get("/vapid-public-key", (_req, res) => {
