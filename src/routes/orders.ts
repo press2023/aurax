@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { prisma } from "../db.js";
+import { sendOrderNotification } from "./push.js";
 
 export const ordersRouter = Router();
 
@@ -37,6 +38,21 @@ ordersRouter.post("/", async (req, res) => {
     if (!items?.length)
       return res.status(400).json({ error: "No items" });
 
+    // Validate that each productId actually exists in the database
+    const productIds: string[] = items.map((it: any) => it.productId);
+    const existingProducts = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true },
+    });
+    const validIds = new Set(existingProducts.map((p) => p.id));
+    const invalidIds = productIds.filter((id) => !validIds.has(id));
+
+    if (invalidIds.length > 0) {
+      return res.status(400).json({
+        error: `بعض المنتجات في السلة غير موجودة أو تم حذفها. يرجى تفريغ السلة وإضافة المنتجات من جديد.\nInvalid product IDs: ${invalidIds.join(", ")}`,
+      });
+    }
+
     const subtotal = items.reduce(
       (sum: number, it: any) => sum + it.price * it.quantity,
       0
@@ -66,6 +82,16 @@ ordersRouter.post("/", async (req, res) => {
       },
       include: { items: true },
     });
+
+    // 🔔 Send push notification to admin (works even when site is closed)
+    sendOrderNotification({
+      id: order.id,
+      customerName: order.customerName,
+      phone: order.phone,
+      city: order.city,
+      total: order.total,
+    }).catch(() => {}); // never block response
+
     res.status(201).json(order);
   } catch (e: any) {
     res.status(400).json({ error: e.message });
