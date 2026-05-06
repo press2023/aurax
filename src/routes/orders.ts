@@ -110,3 +110,33 @@ ordersRouter.patch("/:id", async (req, res) => {
     res.status(400).json({ error: e.message });
   }
 });
+
+// DELETE /api/orders/:id  (delete single order)
+ordersRouter.delete("/:id", async (req, res) => {
+  try {
+    // Delete order items first due to foreign key constraint
+    await prisma.orderItem.deleteMany({
+      where: { orderId: req.params.id },
+    });
+    // Then delete the order
+    await prisma.order.delete({
+      where: { id: req.params.id },
+    });
+    res.status(204).send();
+  } catch (e: any) {
+    res.status(404).json({ error: "Order not found" });
+  }
+});
+
+// DELETE /api/orders  (delete all orders)
+ordersRouter.delete("/", async (_req, res) => {
+  try {
+    // Delete all order items first
+    await prisma.orderItem.deleteMany({});
+    // Then delete all orders
+    await prisma.order.deleteMany({});
+    res.status(204).send();
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
