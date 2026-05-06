@@ -41,6 +41,7 @@ model Product {
   image       String
   images      String[] @default([])
   inStock     Boolean  @default(true)
+  stock       Int      @default(0)
   featured    Boolean  @default(false)
   badge       String?
   sizes       String[] @default([])
